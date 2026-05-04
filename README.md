@@ -17,3 +17,13 @@ I thought this would be a great opportunity and challenge to design an interacti
 ## Full Schematic
 
 ![full schematic](docs/full-schematic/bone-interactive-full.jpg)
+
+## Hardware Architecture
+
+Each 555 timer's TRIG pin is connected to a single reed switch (mounted behind the slot guests put the bone in), and each reed switch feeds into one master N.O. button. RC and pull up networks are configured for each TRIG pin. This configuration allows the TRIG pin on each 555 timer to be pulled LOW only when its corresponding reed switch is closed and the button is pressed. The three 555 timers are used in monostable mode to output a short pulse signal on pin Q when the TRIG pin is pulled low. More on monostable mode and the duration of the pulse below. The output signal (~10.3V when VCC=12V) is fed into the gate of a IRF520 N-channel MOSFET module, which switches the low side of an RGB LED Strip for as long as the gate is actuated.
+
+### Notes
+
+#### Power-on Reset Circuit
+
+The 0.22uF and 10k RC network on the 555's RESET pin form a POR (power-on reset) circuit. During intial power-up testing without it, the output (Q) pin produced occasional HIGH pulses due to undefined internal states of th IC, which turned on downstream LED strips. This RC network briefly holds RESET low during power-up, forcing Q in a known LOW state while internal circuitry stabilizes. As the 0.22uF capacitor charges, RESET rises to VCC and normal operation begins, preventing false triggering at startup.
