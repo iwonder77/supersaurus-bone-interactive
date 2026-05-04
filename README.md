@@ -16,4 +16,4 @@ I thought this would be a great opportunity and challenge to design an interacti
 
 ## Full Schematic
 
-![full schematic](docs/full-schematic/Bone Interactive.jpg)
+![full schematic](<docs/full-schematic/Bone\ Interactive.jpg>)
