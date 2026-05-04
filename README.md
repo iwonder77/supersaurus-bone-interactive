@@ -1,1 +1,1 @@
-# supersaurus-bone-interactive
+# Supersaurus Bone Interactive
