@@ -54,14 +54,32 @@ Below are some of the important electrical characteristics I'll be talking about
   - The point at which the MOSFET barely starts to conduct current from drain to source. It is highly recommended to drive the gate much higher than this value. This advice will be clarified further below.
 - $R_{DS(on)}$ (drain-source on-state resistance): 0.27Ω @ $V_{GS} = 10V, I_D = 5.5A$
   - The effective _on_ resistance between the drain and source of the MOSFET. We want this to be as low as possible, since the power drawn by the MOSFET is given by $P = I^2 * R$
-- $I_D$ vs. $V_DS$ curve at T = 25C (from datasheet)
+- $I_D$ vs. $V_DS$ graph at T = 25C (from datasheet)
 
 <div align="center">
     <image src="docs/assets/ID-vs-VDS-curve.png" alt="id-vs-vds-curve">
 </div>
 
-    - in the ohmic region (linear region of the curve) the MOSFET acts like a voltage controlled resistor, where
+in the ohmic region (linear region of the curves) the MOSFET acts like a voltage controlled resistor, where
 
 $$
 I_D = \frac{V_{DS}}{R_{DS(on)}}
 $$
+
+otherwise, in the saturation region, the MOSFET essentially acts as a current source, since the drain current $I_D$ stays fairly constant regardless of $V_DS$
+
+### Driving the Gate
+
+I want to discuss the case where we power the 555 timer with VCC = 5V. The reason why this wasn't ideal for our use case stumped me for a bit and it'd be a good idea to explain why here.
+
+From the datasheet, the output voltage of the 555 timer's Q pin is specified to measure in the range between 2.75V-3.3V when VCC = 5V. Let's assume that on a good day, it outputs 3.3V consistently. How would the MOSFET operate with a gate voltage of 3.3V?
+
+The first red flag is that we're driving the gate right around the $V_{GS(th)}$ threshold voltage range, where the MOSFET barely starts to open and conduct current. Many sources online will tell you to drive the gate far past this value, but why? Take a look at the $I_D$ vs $V_{DS}$ graph for the curve where $V_{GS} = 4.5V$ (there isn't even a curve for 3.3V which is another bad sign). This curve shows the MOSFET saturating at a drain current of $I_D = 1A$. This means the MOSFET could not physically conduct more than 1A at this gate-source voltage, no matter how hard we push the drain-source voltage $V_{DS}$. At 3.3V this current would be far smaller. How could we drive 12V LEDs with no more than 1A to spare? The obvious answer is we couldn't.
+
+Let's make the following assumptions
+
+1. Small length 12V LED strip (smaller than final install length) draws 1.67A at 12V. This makes its effective resistance $R_{load} = \frac{12V}{1.67A} = 7.2 Ω$.
+2. The MOSFET saturates at 0.5A with $V_GS = 3.3V$ (a really optimistic scenario).
+3. We set up the LED and MOSFET in a low-side switching configuration (negative input of LED connected to drain of MOSFET, positive input connected to positive power supply output, source grounded at power supply ground).
+
+When the gate is driven at 3.3V and the MOSFET opens (barely), the voltage drop across the LED strip is $V_{load} = I_D * R_{load} = 0.3 A * 7.2 Ω = 2.2V$. The LED strip only sees 2.2V! The voltage drop across the drain-to-source is $V_{DS} = 12V - 2.2V = 9.8V$ making the power drawn by the MOSFET a really cool $P = V_{DS} * I_D = 9.8V * 0.3A = 2.9W$. That is not cool at all, the MOSFET is dissipating so much heat, plus the LED strip isn't even seeing anything close to 12V at all.
