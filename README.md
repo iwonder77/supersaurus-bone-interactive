@@ -50,6 +50,8 @@ When triggered, the output voltage on pin Q isn't necessarily equal to VCC. When
 
 Below are some of the important electrical characteristics I'll be talking about. For a deeper dive, refer to the [datasheet](https://www.vishay.com/docs/91017/irf520.pdf)
 
-- $V_{GS(th)}$ (gate-source threshold voltage): 2.0-4.0V @ $V_{DS} = V_{GS}$, $I_D = 200$µA
-  - the point at which the MOSFET barely starts to conduct current from drain to source
+- $V_{GS(th)}$ (gate-source threshold voltage): 2.0-4.0V @ $V_{DS} = V_{GS}$, $I_D = 200{µA}$
+  - The point at which the MOSFET barely starts to conduct current from drain to source. It is highly recommended to drive the gate much higher than this value. This advice will be clarified further below.
 - $R_{DS(on)}$ (drain-source on-state resistance): 0.27Ω @ $V_{GS} = 10V, I_D = 5.5A$
+  - The effective _on_ resistance between the drain and source of the MOSFET. We want this to be as low as possible, since the power drawn by the MOSFET is given by $P = I^2 * R$
+- $I_D$ vs. $V_DS$ curve at T = 25C (from datasheet)
