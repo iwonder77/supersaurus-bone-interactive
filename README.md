@@ -58,4 +58,7 @@ Below are some of the important electrical characteristics I'll be talking about
 
 ![id-vs-vds-curve](docs/assets/ID-vs-VDS-curve.png)
 
-- in the ohmic region (linear region of the curve) the MOSFET acts like a voltage controlled resistor, where $I*D = \frac{V*{DS}}{R\_{DS(on)}}
+- in the ohmic region (linear region of the curve) the MOSFET acts like a voltage controlled resistor, where
+  $$
+  I_D = \frac{V_{DS}}{R_{DS(on)}}
+  $$
