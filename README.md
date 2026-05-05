@@ -28,22 +28,28 @@ The three 555 timers are used in monostable mode to output a short pulse signal 
 
 ### Monostable Mode
 
-Shorting the DISCHARGE and THRESHOLD pins of the 555 timer and routing them to an RC circuit operates the 555 timer in monostable mode. Ben Eater has a really great series on the different 555 timer modes, I highly recommend watching them. Here's the one about [monostable mode](https://www.youtube.com/watch?v=81BgFhm2vz8). In any case, the formula for the output signal duration is
+Shorting the DISCHARGE and THRESHOLD pins of the 555 timer and routing them to an RC circuit operates the 555 timer in monostable mode. Ben Eater has a really great and informative series on the different 555 timer modes, I highly recommend watching them. Here's the one about [monostable mode](https://www.youtube.com/watch?v=81BgFhm2vz8).
+
+In any case, the formula for the output signal duration is
 
 $$
 t_w = 1.1 * R_A * C
 $$
 
-In future boards I wanted to make this duration configurable. On initial thought, I believe this can be done by having three open jumpers routed to resistors of different values (22k, 33k, 47k) to give different duration lengths depending on which jumper is soldered.
+Where R_A and C are the values of the resistor and capacitor in Ohms and Farads. For future boards I wanted to make this duration configurable, and my first idea to accomplish this is to have three open jumpers routed to resistors of different values (22k, 33k, 47k) which will give different duration lengths depending on which jumper is soldered.
 
 ### Power-on Reset Circuit
 
-The 0.22uF and 10k RC network on the 555's RESET pin form a POR (power-on reset) circuit. During intial power-up testing without it, the output (Q) pin produced occasional HIGH pulses due to undefined internal states of th IC, which turned on downstream LED strips. This RC network briefly holds RESET low during power-up, forcing Q in a known LOW state while internal circuitry stabilizes. As the 0.22uF capacitor charges, RESET rises to VCC and normal operation begins, preventing false triggering at startup.
+The 0.22uF and 10k RC network on the 555's RESET pin form a POR (power-on reset) circuit. During intial power-up testing without it, the output (Q) pin produced occasional HIGH pulses due to undefined internal states of the IC, which turned on downstream LED strips. This RC network briefly holds RESET low during power-up, forcing Q in a known LOW state while internal circuitry stabilizes. As the 0.22uF capacitor charges, RESET rises to VCC and normal operation begins, preventing false triggering at startup.
 
 ### Output (Q) Voltage
 
-The output voltage on pin Q isn't necessarily equal to VCC. When powered by 5V, I measured outputs of ~3.3V. When powered by 12V, I measured outputs of ~10.3V. The datasheet confirms this slight drop in voltage, and it is important to know since we'll be using it to drive the gate of an N-Channel MOSFET.
+When triggered, the output voltage on pin Q isn't necessarily equal to VCC. When powered by 5V, I measured outputs of ~3.3V. When powered by 12V, I measured outputs of ~10.3V. The datasheet confirms this slight drop in voltage, and it is important to know since we'll be using it to drive the gate of an N-Channel MOSFET.
 
 ## IRF520 N-Channel MOSFET Notes
 
 Below are some of the important electrical characteristics I'll be talking about. For a deeper dive, refer to the [datasheet](https://www.vishay.com/docs/91017/irf520.pdf)
+
+- $V_GS(th)$ (gate-source threshold voltage): 2.0-4.0V @ $V_DS = V_GS$, $I_D = 200 µA$
+  - the point at which the MOSFET barely starts to conduct current from drain to source
+- $R_DS(on)$ (drain-source on-state resistance): 0.27$\ohm$ @ $V_GS = 10V, I_D = 5.5A$
