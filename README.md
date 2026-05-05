@@ -56,9 +56,11 @@ Below are some of the important electrical characteristics I'll be talking about
   - The effective _on_ resistance between the drain and source of the MOSFET. We want this to be as low as possible, since the power drawn by the MOSFET is given by $P = I^2 * R$
 - $I_D$ vs. $V_DS$ curve at T = 25C (from datasheet)
 
-![id-vs-vds-curve](docs/assets/ID-vs-VDS-curve.png)
+<div>
+    <image src="docs/assets/ID-vs-VDS-curve.png" alt="id-vs-vds-curve">
+</div>
 
-- in the ohmic region (linear region of the curve) the MOSFET acts like a voltage controlled resistor, where
+in the ohmic region (linear region of the curve) the MOSFET acts like a voltage controlled resistor, where
 
 $$
 I_D = \frac{V_{DS}}{R_{DS(on)}}
