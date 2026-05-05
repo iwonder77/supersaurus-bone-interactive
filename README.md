@@ -49,17 +49,37 @@ The 0.22uF and 10k RC network on the 555's RESET pin form a POR (power-on reset)
 
 When triggered, the output voltage on pin Q isn't necessarily equal to VCC. When powered by 5V, I measured outputs of ~3.3V. When powered by 12V, I measured outputs of ~10.3V. The datasheet confirms this slight drop in voltage, and it is important to know since we'll be using it to drive the gate of an N-Channel MOSFET.
 
-## IRF520 N-Channel MOSFET Notes
+## MOSFET Selection and Gate Drive Design Notes
 
-### Electrical Characteristics
+### Role
+
+We want the MOSFET to be used as a low-side switch (N-channel!) to control a 12V RGB LED strip. The design requirement is to switch currents on the order of 1–2A with minimal power dissipation and predictable behavior across MOSFET parameter variations.
+
+### Initial Implementation and Failure Mode
+
+My initial prototype powered the 555 timer at VCC = 5V and used the output (Q) pin to directly drive the gate of an IRF520 MOSFET module. While the timing circuit functioned correctly, the LED strip failed to illuminate properly. This failure mode was not due to wiring or logic errors, but rather improper gate drive conditions for the selected MOSFET.
+
+### Key Electrical Considerations
 
 Below are some of the important electrical characteristics I'll be talking about. For a deeper dive, refer to the [datasheet](https://www.vishay.com/docs/91017/irf520.pdf)
 
-- $V_{GS(th)}$ (gate-source threshold voltage): 2.0-4.0V @ $V_{DS} = V_{GS}$, $I_D = 200{µA}$
-  - The point at which the MOSFET barely starts to conduct current from drain to source. It is highly recommended to drive the gate much higher than this value. This advice will be clarified further below.
-- $R_{DS(on)}$ (drain-source on-state resistance): 0.27Ω @ $V_{GS} = 10V, I_D = 5.5A$
-  - The effective _on_ resistance between the drain and source of the MOSFET. We want this to be as low as possible, since the power drawn by the MOSFET is given by $P = I^2 * R$
-- $I_D$ vs. $V_{DS}$ graph at T = 25C (from datasheet)
+#### 1. $V_{GS}$ Gate Threshold Voltage
+
+The IRF520 specifies a gate-source threshold voltage:
+
+- \( V\_{GS(th)} = 2.0\text{V} \text{ to } 4.0\text{V} \) at \( I_D = 250\mu A \)
+
+This parameter is **NOT** an operating point, you'll find that the best design is to drive the gate far past this threshold value. It does **not** indicate the voltage required for normal operation. Instead, it defines the point at which the MOSFET begins to conduct a _very small_ current.
+
+Designing around \( V\_{GS(th)} \) leads to unpredictable and unsuccessful switching behavior.
+
+#### 2. Then What Is The Required Gate Voltage for Switching Applications?
+
+For switching applications, the MOSFET must operate in the **ohmic (linear) region** (the $I_D vs V_{DS}$ graph below shows this region for various $V_{GS}$ curves) with as low a drain-source resistance \( R\_{DS(on)} \) as possible. The lower the resistance, the less power that is dissipated.
+
+From the datasheet: $R_{DS(on)} = 0.27\Omega$ at $V_{GS} = 10V$
+
+#### 3. $I_D$ vs. $V_{DS}$ graph at T = 25C (from datasheet)
 
 <div align="center">
     <image src="docs/assets/ID-vs-VDS-curve.png" alt="id-vs-vds-curve">
@@ -71,45 +91,46 @@ $$
 I_D = \frac{V_{DS}}{R_{DS(on)}}
 $$
 
-note that $R_{DS(on)}$ is not a fixed quantity, but decreases as $V_{GS}$ rises above $V_{GS(th)}$. The datasheet value of 0.27Ω only holds at $V_{GS} = 10V$. Near the threshold voltage, it can be orders of magnitude higher. Otherwise, in the saturation region, the MOSFET essentially acts as a current source or current limiting element, due to how the drain current $I_D$ stays fairly constant regardless of $V_{DS}$
+note that $R_{DS(on)}$ is not a fixed quantity, but decreases as $V_{GS}$ rises above $V_{GS(th)}$. The datasheet value of 0.27Ω only holds at $V_{GS} = 10V$. Near the threshold voltage, it can be orders of magnitude higher, which directly increases power drawn ($P = I^2 * R$). Otherwise, in the saturation region, the MOSFET essentially acts as a current source, due to how the drain current $I_D$ stays nearly constant regardless of $V_{DS}$.
 
-### Driving the Gate
+### Gate Drive Design
 
-I want to discuss the case where the gate of the IRF520 MOSFET is being driven by the output (Q) pin of the 555 timer powered at VCC = 5V. The reason why this wasn't ideal for our use case stumped me for a bit and it'd be a good idea to explain it here.
-
-From the datasheet, the output voltage of the 555 timer's Q pin falls between 2.75V-3.3V when VCC = 5V. Let's assume that on a good day, it outputs 3.3V consistently. How would the MOSFET operate with a gate voltage of 3.3V?
-
-The first red flag is that we're driving the gate right in the $V_{GS(th)}$ threshold voltage range, where the MOSFET barely starts to open and conduct current. This is a massive reliability concern, because:
+With a 5V-powered 555 timer, the output pin's high voltage falls between 2.75V-3.3V. This is exactly in the MOSFET's $V_{GS}$ range where it barely starts to open and conduct current. This is a huge reliability concern, because:
 
 - If the specific MOSFET we used had a $V_{GS(th)}$ = 2V: the MOSFET would slightly conduct
-- If the MOSFET had a $V_{GS(th)}$ = 3.3V: the MOSFET would be right at threshold - essentially off
+- If the MOSFET had a $V_{GS(th)}$ = 3.3V: the MOSFET would be right at threshold — essentially off
 - If the MOSFET had a $V_{GS(th)}$ = 4V: the MOSFET wouldn't conduct at all
 
-This should be enough of a reason to design for a gate-source voltage far past the threshold, but let's make some calculations to hammer down why this is incredibly inefficient. Before we do so let's make some safe assumptions about our load demand:
+To ensure proper MOSFET operation, the gate drive voltage must be increased to a level where \( R\_{DS(on)} \) is low and well-defined.
 
-1. The 12V LED strip we're switching draws 1.67A at 12V (final installation strip draws much more). This makes its effective resistance $R_{load} = \frac{12V}{1.67A} = 7.2 Ω$
-2. We set up the LED and MOSFET in a low-side switching configuration (negative input of LED connected to drain of MOSFET, positive input connected to positive power supply output, source grounded at power supply ground).
+Two viable approaches were considered:
 
-Take a look at the $I_D$ vs $V_{DS}$ graph. For $V_{GS} = 4.5V$, the device is in saturation at $I_D \approx 1A$ - well below the LED strip's rated 1.67A. The MOSFET becomes the current-limiting element: no matter how high $V_{DS}$ climbs, $I_D$ won't exceed 1A at this gate voltage. At $V_{GS} = 3.3V$, this current would be far smaller. How could we drive 12V LEDs with no more than 1A to spare? The obvious answer is we couldn't. Even so, let's work through exactly how bad it gets. For a device with $V_{GS(th)} = 2V$ - the most favorable end of the spec range - a drain current of $I_D = 0.3A$ in saturation is a generous estimate.
+#### Option 1: Use a Logic-Level MOSFET (IRLZ44N) with 5V supply for 555 timers
 
-In saturation, the MOSFET acts as a current source: $I_D$ is goverened by $V_{GS}$ and stays roughly constant regardless of $V_{DS}$. So when the gate is driven at 3.3V, the voltage drop across the LED strip is...
+- Pros: compatible with lower level logic
+- Cons: complicates power architecture (12V for LED strips and 5V for 555 timers)
+
+#### Option 2: Increase Gate Drive Voltage (Selected)
+
+Power the 555 timer at 12V (5V is actually in the lower end of the recommended operating range, should have started here). This results in...
+
+- A gate drive voltage of ~10V
+- A fully enhanced ("on") IRF520
+- The use of one 12V power supply throughout the system
+
+### Final Operating Behavior Calculations
+
+A safe assumption of the current draw required by each LED strip is 1.67A (measured using my bench power supply). With the output signal of the 555 timer (powered at 12V now) driving the gate voltage at 10V, we can use the $R_{DS(on)}$ value directly from the datasheet to calculate the voltage drop across the drain to source:
 
 $$
-V_{load} = I_D * R_{load} = 0.3 A \times 7.2 \Omega = 2.2V
+V_{DS} = I_D \times R_{DS(on)} = 1.67,\text{A} \times 0.27,\Omega =
+  0.45,\text{V}
 $$
 
-The LED strip only sees 2.2V! The voltage drop across the drain-to-source is
+And that gives us a power dissipation of
 
 $$
-V_{DS} = 12V - 2.2V = 9.8V
+P = I_D^2 \times R_{DS(on)} = (1.67,\text{A})^2 \times 0.27,\Omega \approx 0.67,\text{W}
 $$
 
-We can confirm the saturation assumption holds: saturation requires $V_{DS} \geq V_{GS} - V_{GS(th)} = 3.3\,\text{V} - 2\,\text{V} = 1.3\,\text{V}$. With $V_{DS} = 9.8\,\text{V}$, this is satisfied by a wide margin. The power dissipated by the MOSFET is a cool...
-
-$$
-P = V_{DS} * I_D = 9.8V * 0.3A = 2.9W
-$$
-
-That is actually not cool at all, the MOSFET is burning nearly 3W, and the LED strip isn't even seeing anything close to 12V.
-
-Let's redo the calculations with $V_{GS} = 10V$ (closer to what the gate sees when the 555 timer is powered by VCC=12V). The curve for
+This is within a manageable range for the MOSFET, the T0-220 package dissipates comfortably without a heatsink.
