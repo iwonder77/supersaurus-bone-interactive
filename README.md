@@ -6,14 +6,26 @@ https://github.com/user-attachments/assets/5193e17a-1725-41bf-98e3-4b2cfe211b8b
 
 The Supersaurus bone interactive at Thanksgiving Point's Museum of Ancient Life invites visitors to guess which dinosaur the Supersaurus is related to based solely on scapula bone graphics. Guests place the Supersaurus scapula into one of three slots, each corresponding to a different dinosaur with its own scapula graphic. When they're ready to check their answer, they press a button, and an LED light strip installed behind the frosted acrylic slots briefly lights up red or green, providing immediate feedback.
 
-I thought this would be a great opportunity and challenge to design an interactive without using a microcontroller, which led me to a deep dive into 555 timers, MOSFETs, PCB design and manufacturing, and more. This repository documents that learning process, and includes schematics, design decisions, and links to relevant datasheets.
+When presented with the requirements of this project, my mind immediately jumped to using basic GPIO pins on a microcontroller to read the inputs, debounce them in software, and trigger a switching module for the lights. Even though that could've sufficed, I thought an analog timing circuit would be a much more elegant approach. I'm glad I went this direction because I went on a deeper dive into 555 timers, MOSFETs, PCB design and manufacturing, and more. The aim of this repository is to document that process, and includes schematics, design decisions, and links to relevant datasheets.
+
+## Hardware Design Requirements
+
+I immediately saw the need for a timing circuit that...
+
+- Debounces reed switch + button inputs for a smooth user experience
+- Triggeres immediate feedback on their answer for a short duration
+- Resets the system quickly for the next guest so as to not give away the answer
+- Draws minimal power to handle reliable long term operation (next to 0 maintenance on parts)
+
+These requirements quickly led to using a 555 timer in monostable mode to handle the timing portion of the interactive, and a MOSFET circuit to handle the fast and power efficient switching of a higher current load (LED strips).
 
 ## Main Hardware Components
 
 - T.I. NE555P Timer ([datasheet](https://www.ti.com/lit/ds/symlink/ne555.pdf?ts=1777883502652))
 - IRF520 MOSFET ([datasheet](https://www.vishay.com/docs/91017/irf520.pdf))
 - PWM RGB LED Strips [link](https://www.amazon.com/dp/B0FSWXXXD4?ref=fed_asin_title&th=1)
-- Full BOM is included in the `docs/` folder
+
+The full BOM is included in the `docs/` folder
 
 ## Full Schematic
 
@@ -23,7 +35,7 @@ I thought this would be a great opportunity and challenge to design an interacti
 
 Each 555 timer's TRIG pin is connected to a single reed switch (mounted behind the slot guests put the bone in), and each reed switch feeds into one "master" N.O. button. RC/pull up networks are configured for each TRIG pin to ensure smooth and predictable switching. This configuration allows the TRIG pin on each 555 timer to be pulled LOW only when its corresponding reed switch is closed **and** the button is pressed.
 
-The three 555 timers are used in monostable mode to output a short pulse signal on pin Q when the TRIG pin is pulled low. More on monostable mode and the duration of the pulse below. The output signal (~10.3V when VCC=12V) is fed into the gate of a IRF520 N-channel MOSFET module, which switches the low side of an RGB LED Strip for as long as the gate is actuated.
+The three 555 timers are used in monostable mode to output a short pulse signal on pin Q when the TRIG pin is pulled low. More on monostable mode and the duration of the pulse below. The output signal (~10.3V when VCC = 12V) is fed into the gate of a IRF520 N-channel MOSFET module, which switches the low side of an RGB LED Strip for as long as the gate is driven.
 
 ## 555 Timer Notes
 
@@ -37,7 +49,7 @@ $$
 t_w = 1.1 \times R_A \times C
 $$
 
-Where R_A and C are the values of the resistor and capacitor in Ohms and Farads. For future boards I wanted to make this duration configurable, and my first idea to accomplish this is to have three open jumpers routed to resistors of different values (22k, 33k, 47k) which will give different duration lengths depending on which jumper is soldered.
+Where $R_A$ and $C$ are the values of the resistor and capacitor. For future boards I wanted to make this duration configurable by having three open jumpers routed to resistors of different values (22k, 33k, 47k). The output pulse duration would change depending on which jumper is soldered.
 
 Note: the trigger pulse must be shorter than $t_w$ and below $\frac{1}{3}V_{CC}$ (the 555's internal comparator threshold). If TRIG remains below $\frac{1}{3}V_{CC}$ beyond $t_w$, the output holds HIGH until TRIG rises.
 
@@ -53,7 +65,8 @@ When triggered, the output voltage on pin Q isn't necessarily equal to VCC. When
 
 ### Role
 
-We want the MOSFET to be used as a low-side switch (N-channel!) to control a 12V RGB LED strip. The design requirement is to switch currents on the order of 1–2A with minimal power dissipation and predictable behavior across MOSFET parameter variations.
+The design requirements for wanted a component/module to control a 12V RGB LED strip
+We want the MOSFET to be used as a low-side switch (N-channel!) to control a 12V RGB LED strip. The design requirement is to switch currents on the order of 1–2A with minimal power dissipation and predictable behavior across MOSFET parameter variations. Although quite outdated, the IRF520 N-Channel MOSFET was selected due to its accessibility and very low cost.
 
 ### Initial Implementation and Failure Mode
 
