@@ -134,7 +134,7 @@ Power the 555 timers at 12V (note: 5V sits at the lower bound of the NE555's rec
 
 ### Final Operating Behavior Calculations
 
-Each LED strip draws 1.67A at 12V, measured directly on the bench. With the 555 timers powered at VCC = 12V, the gate sees ~10.3V - close to the datasheet condition of $V_{GS} = 10\,\text{V}$, so $R_{DS(on)} = 0.27\,\Omega$ applies directly.
+Each LED strip draws 1.67A at 12V, measured directly on the bench. With the 555 timers powered at VCC = 12V, the gate sees ~10.3V - close to the datasheet condition of $V_{GS} = 10\text{V}$, so $R_{DS(on)} = 0.27\Omega$ applies directly.
 
 The voltage drop across the MOSFET when fully on is
 
@@ -145,7 +145,7 @@ $$
 This confirms the MOSFET is in the ohmic region: ohmic operation requires $V_{DS} < V_{GS} - V_{GS(th)}$, and $0.45\text{V} \ll 10\text{V} - 2\text{V} = 8\text{V}$. The power dissipated by the MOSFET is then:
 
 $$
-P = I_D^2 \times R_{DS(on)} = (1.67\,\text{A})^2 \times 0.27\,\Omega \approx 0.75\,\text{W}
+P = I_D^2 \times R_{DS(on)} = (1.67\text{A})^2 \times 0.27\Omega \approx 0.75\text{W}
 $$
 
 At 0.75W, the IRF520 in its TO-220 package dissipates comfortably without a heatsink - a viable operating point for this application.
