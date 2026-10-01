@@ -7,6 +7,7 @@ fp-info-cache
 ~*.lck
 \#auto_saved_files#
 _autosave-*
+*.history
 
 # Generated netlists (regenerate from source)
 *.net
