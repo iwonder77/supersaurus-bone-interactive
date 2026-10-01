@@ -1,20 +1,40 @@
 # Supersaurus Bone Interactive
 
+Three-channel 555 monostable timer board driving RGB LED strips for a guess-the-dinosaur-bone exhibit at Thanksgiving Point's Museum of Ancient Life.
+
 https://github.com/user-attachments/assets/5193e17a-1725-41bf-98e3-4b2cfe211b8b
+
+---
+
+## At a Glance
+
+|                        |                                                               |
+| ---------------------- | ------------------------------------------------------------- |
+| **Supply**             | 12 V DC, single rail                                          |
+| **Channels**           | 3 (one per answer slot)                                       |
+| **Input per channel**  | Littlefuse reed switch (slot occupancy) AND master pushbutton |
+| **Output pulse width** | `~3.63s` - set by R`33k` / C`100uF`                           |
+| **Load per channel**   | 12V RGB LED strip, 1.67 A measured                            |
+| **Load switching**     | Off-board N-channel MOSFET module, low-side                   |
+| **PCB**                | `2-layer, 1 oz copper, HASL, 1.6 mm`                          |
+| **Assembly**           | `JLCPCB Assembly and hand soldered`                           |
+| **Active logic**       | Trigger is active-LOW; LED output is active-HIGH              |
+
+---
 
 ## Overview
 
-The Supersaurus bone interactive at Thanksgiving Point's Museum of Ancient Life invites visitors to guess which dinosaur the Supersaurus is related to based solely on scapula bone graphics. Guests place the Supersaurus scapula into one of three slots, each corresponding to a different dinosaur with its own scapula graphic. When they're ready to check their answer, they press a button, and an LED light strip installed behind the frosted acrylic slots briefly lights up red or green, providing immediate feedback.
+The Supersaurus bone interactive at Thanksgiving Point's Museum of Ancient Life invites visitors to guess which dinosaur the Supersaurus is related to based solely on scapula bone graphics. Guests place the Supersaurus scapula into one of three slots, each corresponding to a different dinosaur with its own scapula graphic. When they're ready to check their answer, they press a button, and an LED light strip installed behind the frosted acrylic slots briefly lights up red or green, providing immediate feedback on their guess.
 
-When presented with the requirements of this project, my mind immediately jumped to using basic GPIO pins on a microcontroller to read the inputs, debounce them in software, and trigger a switching module for the lights. Even though that could've sufficed, I thought an analog timing circuit would be a much more elegant approach. I'm glad I went this direction because I went on a deeper dive into 555 timers, MOSFETs, PCB design and manufacturing, and more. The aim of this repository is to document that process, and includes schematics, design decisions, and links to relevant datasheets.
+When presented with the requirements of this project, my mind immediately jumped to using basic GPIO pins on a microcontroller to read the inputs, debounce them in software, and trigger a switching module for the lights. Even though that may have worked, removing software entirely for a three-input interaction with fixed timing removes an entire set of failure modes. A discrete analog implementation has no boot time, no watchdog to tune, and no flash to corrupt on abrupt power loss.
 
 ## Hardware Design Requirements
 
-I immediately saw the need for a timing circuit that...
+The interactive needed a circuit that:
 
 - Debounces reed switch + button inputs for a smooth user experience
-- Triggeres immediate feedback on their answer for a short duration
-- Resets the system quickly for the next guest so as to not give away the answer
+- Triggers immediate feedback on their answer for a short duration
+- Resets the system quickly to not spoil the answer for the next guest
 - Draws minimal power to handle reliable long term operation (next to 0 maintenance on parts)
 
 These requirements quickly led to using a 555 timer in monostable mode to handle the timing portion of the interactive, and a MOSFET circuit to handle the fast and power efficient switching of a higher current load (LED strips).
