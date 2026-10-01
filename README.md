@@ -20,7 +20,7 @@ https://github.com/user-attachments/assets/5193e17a-1725-41bf-98e3-4b2cfe211b8b
 | **Assembly**           | `JLCPCB Assembly and hand soldered`                           |
 | **Active logic**       | Trigger is active-LOW; LED output is active-HIGH              |
 
----
+![3d PCB Model](dosc/assets/timer-board-3d-model.png)
 
 ## Overview
 
@@ -45,7 +45,7 @@ These requirements quickly led to using a 555 timer in monostable mode to handle
 - IRF520 MOSFET ([datasheet](https://www.vishay.com/docs/91017/irf520.pdf))
 - PWM RGB LED Strips [link](https://www.amazon.com/dp/B0FSWXXXD4?ref=fed_asin_title&th=1)
 
-The full BOM is included in the `docs/` folder
+The full BOM is included in the `manufacturing/` folder
 
 ## Full Schematic
 
