@@ -20,6 +20,8 @@ https://github.com/user-attachments/assets/5193e17a-1725-41bf-98e3-4b2cfe211b8b
 | **Assembly**           | `JLCPCB Assembly and hand soldered`                           |
 | **Active logic**       | Trigger is active-LOW; LED output is active-HIGH              |
 
+---
+
 ![3d PCB Model](docs/assets/timer-board-3d-model.png)
 
 ## Overview
